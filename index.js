@@ -45,7 +45,21 @@ server.get("/api/cohorts/:id", async (req, res) => {
       }
   })
 
-  server.post("/api/cohorts", async (req, res) => {
+server.get("/api/cohorts/:id/students", async (req, res) => {
+    try {
+        const students = await db('students')
+          .where({cohort_id: req.params.id})
+        if (!students) {
+        res.status(404).json({error: "No students were found!"})
+        } else {
+        res.status(200).json(students);
+        }
+    } catch (error) {
+    res.status(500).json(error)
+    }
+})
+
+server.post("/api/cohorts", async (req, res) => {
     if (!req.body.name) {
         res.status(400).json({error: 'please enter a name!'})
       }
@@ -59,6 +73,55 @@ server.get("/api/cohorts/:id", async (req, res) => {
     res.status(500).json(error)
     }
 })
+
+server.put("/api/cohorts/:id", async (req, res) => {
+    if (!req.body.name) {
+        res.status(400).json({error: 'please enter a name!'})
+    }
+    try {
+      const count = await db("cohorts")
+        .where({ id: req.params.id})
+        .update(req.body)
+  
+        if (count > 0) {
+            const cohort = await db('cohorts')
+            .where({id: req.params.id})
+            .first();
+    
+            res.status(200).json(cohort)
+        } else {
+            res.status(404).json({error: "cohort not found"})
+        }
+    } catch (error) {
+      res.status(500).json(error)
+    }
+})
+
+server.delete("/api/cohorts/:id", async (req, res) => {
+    try {
+      const count = await db('cohorts')
+        .where({ id: req.params.id})
+        .del();
+        if (count > 0) {
+          res.status(204).end();
+        } else {
+          res.status(404).json({ error: "cohort not found"})
+        }
+    } catch (error) {
+      res.status(500).json(error)
+    }
+})
+
+//Students: 
+server.get("/api/students", async (req, res) => {
+    try {
+        const students = await db("students")
+        res.status(200).json(students);
+    } catch (error) {
+        res.status(500).json({error: "Couldn't fetch students"})
+    }
+})
+
 const port = process.env.PORT || 5000;
 server.listen(port, () => {
     console.log(`\n*** Server Running on Port ${port} ***\n`)
